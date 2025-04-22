@@ -1,39 +1,57 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define N 1000
+#include <string.h>
+#define MAX 50
 
-struct {
+typedef struct {
     int TareaID;//Numérico autoincremental comenzando en 1000
     char *Descripcion; //
     int Duracion; // entre 10 – 100
-} typedef Tarea;
+} Tarea;
 
-struct {
+typedef struct {
     Tarea T;
-    Nodo *Siguiente;
-} typedef Nodo;
+    struct Nodo *Siguiente;
+} Nodo;
 
 Nodo * crearListaVacia();
-Nodo * crearNodo(int num, char * descripcion, int duracion);
+Nodo * crearNodo(char descripcion[], int duracion, int id);
+void insertarNodo(Nodo **start, Nodo *nodo);
+void mostrarNodos(Nodo ** start);
 
 int main(){
-    int nuevoDato, duracion, id = 1000;
-    char * descripcion;
-    Nodo * ToDo = crearListaVacia();
+    int aux=1, id=1000;
+    Nodo * start = crearListaVacia();
+    
     do
     {
+        int duracionTarea;
+        char buffer[MAX];
+
         printf("Ingrese una descripcion de la tarea: ");
-        scanf("%s", descripcion);
-        printf("Ingrese la duracion de la tarea: ");
-        scanf("%d", &duracion);
-        crearNodo(id, descripcion, duracion);
-        printf("¿Desea ingresar una nueva tarea? \n1. Si\2. No");
-        scanf("%d", &nuevoDato);
+        fgets(buffer, MAX, stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';
+        
+        printf("Ingrese la duracion de la tarea (entte 10 y 100): ");
+        scanf("%d", &duracionTarea);
+        getchar();
+        if (duracionTarea >= 10 && duracionTarea <= 100){
+            Nodo * tareaPendiente = crearNodo(buffer, duracionTarea, id);
+            insertarNodo(&start, tareaPendiente);
+            printf("¿Desea ingresar una nueva tarrea? \n0. No\n1. Si\n");
+            scanf("%d", &aux);
+            getchar();
+        } else {
+            printf("Ingrese un numero entre 10 y 100.\n");
+            return 0;
+        }
+        
         id++;
-    } while (nuevoDato != 0);
+    } while (aux != 0);
+
+    mostrarNodos(&start);
     
-
-
+    
     return 0;
 }
 
@@ -41,11 +59,34 @@ Nodo * crearListaVacia(){
     return NULL;
 }
 
-Nodo * crearNodo(int id, char * descripcion, int duracion){
-    Nodo * nodo = (Nodo *) malloc(sizeof(Nodo));
-    nodo->T.TareaID = id;
-    nodo->T.Descripcion = descripcion;
-    nodo->T.Duracion = duracion;
-    nodo->Siguiente = NULL;
-    return nodo;
+Nodo * crearNodo(char descripcion[], int duracion, int id){
+    Nodo * tareaPendiente = (Nodo *) malloc(sizeof(Nodo));
+    tareaPendiente->T.TareaID = id;
+
+    tareaPendiente->T.Descripcion = (char *) malloc(strlen(descripcion)+1);
+    strcpy(tareaPendiente->T.Descripcion, descripcion);
+
+    tareaPendiente->T.Duracion = duracion;
+
+    tareaPendiente->Siguiente = NULL;
+
+    return tareaPendiente;
+}
+
+void insertarNodo(Nodo **start, Nodo * nodo){
+    nodo->Siguiente = *start;
+    *start = nodo;
+}
+
+void mostrarNodos(Nodo ** start){
+    Nodo * AuxNodo = *start;
+    printf("\nNodos\n");
+    while (AuxNodo)
+    {
+        printf("Id: %d \n", AuxNodo->T.TareaID);
+        printf("Descripcion: %s\n", AuxNodo->T.Descripcion);
+        printf("Duracion: %d\n", AuxNodo->T.Duracion);
+        printf("\n");
+        AuxNodo = AuxNodo->Siguiente;
+    }
 }
