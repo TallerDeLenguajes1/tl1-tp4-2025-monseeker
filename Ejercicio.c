@@ -19,9 +19,10 @@ Nodo * crearNodo(char descripcion[], int duracion, int id);
 void insertarNodo(Nodo **start, Nodo *nodo);
 int cargarTareas(int id, Nodo ** start);
 void mostrarNodos(Nodo ** start);
-Nodo * buscarNodo(Nodo ** start, int id);
+void buscarTarea(Nodo * startRealizados, Nodo * startPendientes);
 Nodo * quitarNodo(Nodo ** start, int id);
 void moverNodo(Nodo **startRealizados, Nodo **startPendientes, int id);
+void liberarMemoria(Nodo ** start);
 
 int main(){
     int id=1000, aux, idTarea;
@@ -51,6 +52,11 @@ int main(){
     printf("\n");
     printf("Tareas Realizadas: \n");
     mostrarNodos(&startRealizadas);
+
+    buscarTarea(startRealizadas, startPendientes);
+
+    liberarMemoria(&startPendientes);
+    liberarMemoria(&startRealizadas);
     
     return 0;
 }
@@ -93,9 +99,11 @@ int cargarTareas(int id, Nodo ** start){
         if (duracionTarea >= 10 && duracionTarea <= 100){
             Nodo * tareaPendiente = crearNodo(buffer, duracionTarea, id);
             insertarNodo(start, tareaPendiente);
+            printf("\n");
             printf("Desea ingresar una nueva tarea? \n0. No\n1. Si\n");
             scanf("%d", &bool);
             getchar();
+            printf("\n");
             return bool;
         } else {
             printf("Ingrese un numero entre 10 y 100.\n");
@@ -114,15 +122,6 @@ void mostrarNodos(Nodo ** start){
         printf("\n");
         AuxNodo = AuxNodo->Siguiente;
     }
-}
-
-Nodo * buscarNodo(Nodo ** start, int id){
-    Nodo * auxNodo = *start;
-    while (auxNodo && auxNodo->T.TareaID != id)
-    {
-        auxNodo = auxNodo->Siguiente;
-    }
-    return auxNodo;    
 }
 
 Nodo * quitarNodo(Nodo ** start, int id){
@@ -146,25 +145,15 @@ Nodo * quitarNodo(Nodo ** start, int id){
 }
 
 void moverNodo(Nodo **startRealizados, Nodo **startPendientes, int id){
-    int bool;
+    int confirmar;
     Nodo * auxNodo = *startRealizados;
-    Nodo * temp = buscarNodo(startPendientes, id);
+    Nodo * temp = quitarNodo(startPendientes, id);
 
     if (temp == NULL) {
         printf("Error: No se encontró el nodo con ID %d.\n", id);
         return;
     }
 
-    if (auxNodo == NULL) {
-        *startRealizados = temp;
-        temp->Siguiente = NULL;
-        return;
-    }
-
-    while ((auxNodo)->Siguiente != NULL)
-    {
-        auxNodo = auxNodo->Siguiente;
-    }
     printf("\n");
     printf("Nodo a mover: \n");
     printf("    ID: %d \n", temp->T.TareaID);
@@ -172,14 +161,125 @@ void moverNodo(Nodo **startRealizados, Nodo **startPendientes, int id){
     printf("    Duracion: %d \n", temp->T.Duracion);
     printf("\n");
     printf("Confirma la operacion?  0.No  1.Si \n");
-    scanf("%d", &bool);
+    scanf("%d", &confirmar);
     getchar();
 
-    if(bool){
-        auxNodo->Siguiente = temp;
-        temp->Siguiente = NULL;
-        Nodo * eliminar = quitarNodo(startPendientes, id);
-        free(eliminar);
+    if(!confirmar){
+        temp->Siguiente = *startPendientes;
+        *startPendientes = temp;
+        return;
     } 
 
+    if(*startRealizados == NULL){
+        *startRealizados = temp;
+        temp->Siguiente = NULL;
+    } else {
+        Nodo * auxNodo = *startRealizados;
+        while (auxNodo->Siguiente != NULL)
+        {
+            auxNodo = auxNodo->Siguiente;
+        }
+        auxNodo->Siguiente = temp;
+        temp->Siguiente = NULL;
+    }
+}
+        
+void buscarTarea(Nodo * startRealizados, Nodo * startPendientes){
+    int buscar;
+    printf("Buscar:\n 1. Por ID \n 2. Por palabra");
+    printf("\n");
+    scanf("%d", &buscar);
+    getchar();
+
+    if(buscar == 1){
+        Nodo * auxNodo = startRealizados;
+        int id;
+        printf("Buscar ID: ");
+        scanf("%d", &id);
+        printf("\n");
+        getchar();
+        while (auxNodo)
+        {
+            if (auxNodo->T.TareaID == id)
+            {
+                printf("\n");
+                printf("Tarea Realizada: \n");
+                printf("    ID: %d \n", auxNodo->T.TareaID);
+                printf("    Descripcion: %s \n", auxNodo->T.Descripcion);
+                printf("    Duracion: %d \n", auxNodo->T.Duracion);
+                printf("\n");
+            }
+            
+            auxNodo = auxNodo->Siguiente;
+        }
+
+        auxNodo = startPendientes;
+        while (auxNodo)
+        {
+            if (auxNodo->T.TareaID == id)
+            {
+                printf("\n");
+                printf("Tarea Pendiente: \n");
+                printf("    ID: %d \n", auxNodo->T.TareaID);
+                printf("    Descripcion: %s \n", auxNodo->T.Descripcion);
+                printf("    Duracion: %d \n", auxNodo->T.Duracion);
+                printf("\n");
+            }
+            
+            auxNodo = auxNodo->Siguiente;
+        }
+        
+    } else 
+        if (buscar == 2)
+        {
+            char palabra[MAX];
+            printf("Buscar palabra: ");
+            fgets(palabra, MAX, stdin);
+            palabra[strcspn(palabra, "\n")] = '\0';
+            Nodo * auxNodo = startPendientes;
+            while (auxNodo)
+            {
+                if (strstr(auxNodo->T.Descripcion, palabra))
+                {
+                    printf("\n");
+                    printf("Tarea Pendiente: \n");
+                    printf("    ID: %d \n", auxNodo->T.TareaID);
+                    printf("    Descripcion: %s \n", auxNodo->T.Descripcion);
+                    printf("    Duracion: %d \n", auxNodo->T.Duracion);
+                    printf("\n");
+                }
+                
+                auxNodo = auxNodo->Siguiente;
+            }
+            
+            auxNodo = startRealizados;
+            while (auxNodo)
+            {
+                if (strstr(auxNodo->T.Descripcion, palabra))
+                {
+                    printf("\n");
+                    printf("Tarea Realizada: \n");
+                    printf("    ID: %d \n", auxNodo->T.TareaID);
+                    printf("    Descripcion: %s \n", auxNodo->T.Descripcion);
+                    printf("    Duracion: %d \n", auxNodo->T.Duracion);
+                    printf("\n");
+                }
+                
+                auxNodo = auxNodo->Siguiente;
+            }
+        }   
+}
+
+
+void liberarMemoria(Nodo ** start){
+    Nodo * auxNodo = *start;
+    Nodo * temp;
+    while (auxNodo)
+    {
+        temp = auxNodo->Siguiente;
+        free(auxNodo->T.Descripcion);
+        free(auxNodo);
+        auxNodo = temp;
+    }   
+    *start = NULL;
 }
